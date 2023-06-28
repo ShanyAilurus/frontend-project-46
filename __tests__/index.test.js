@@ -2,7 +2,7 @@ import { test, expect } from '@jest/globals';
 import { fileURLToPath } from 'url';
 import path, { dirname } from 'path';
 import fs from 'fs';
-import genDiff from '../src/index.js';
+import gendiff from '../src/index.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -15,5 +15,5 @@ test.each(files)('gendiff', (file1, file2) => {
   const file1path = getFixturePath(file1);
   const file2path = getFixturePath(file2);
   const result = readFile('resultJson.txt');
-  expect(genDiff(file1path, file2path)).toEqual(result);
+  expect(gendiff(file1path, file2path)).toEqual(result);
 });

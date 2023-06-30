@@ -4,11 +4,7 @@ import path from 'path';
 import process from 'process';
 
 const getParseData = (pathToFile) => {
-  const absolutePath = path.resolve(
-    process.cwd(),
-    "__fixtures__",
-    pathToFile
-  );
+  const absolutePath = path.resolve(process.cwd(), '__fixtures__', pathToFile);
   const fileData = fs.readFileSync(absolutePath).toString();
   return fileData;
 };
@@ -33,11 +29,10 @@ const gendiff = (filePath1, filePath2) => {
     if (value1 === value2) {
       return _.concat(...[acc], [`${defaultIndent}  ${val}: ${value1}`]);
     }
-    if (value2 === "") {
-      return _.concat(...[acc], [`${defaultIndent}- ${val}: ${value1}`]);
-    }
-    if (value1 === "") {
-      return _.concat(...[acc], [`${defaultIndent}+ ${val}: ${value2}`]);
+    if (value1 === '' || value2 === '') {
+      return _.concat(...[acc], [
+        `${defaultIndent}- ${val}: ${value1}${value2}`,
+      ]);
     }
     return _.concat(
       ...[acc],

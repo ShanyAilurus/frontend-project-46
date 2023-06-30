@@ -23,24 +23,27 @@ const gendiff = (filePath1, filePath2) => {
   const dataSecondObj = JSON.parse(secondObj);
   const mergedKeys = getSortedKeys(dataFirstObj, dataSecondObj);
   const sorted = _.sortBy(mergedKeys).reduce((acc, val) => {
-    const value1 = _.get(dataFirstObj, val, "");
-    const value2 = _.get(dataSecondObj, val, "");
-    const defaultIndent = "  ";
+    const value1 = _.get(dataFirstObj, val, '');
+    const value2 = _.get(dataSecondObj, val, '');
+    const defaultIndent = '  ';
     if (value1 === value2) {
-      return _.concat(...[acc], [`${defaultIndent}  ${val}: ${value1}`]);
+      return _.concat(...[acc], [`${defaultIndent.repeat(2)}${val}: ${value1}`]);
     }
     if (value1 === '' || value2 === '') {
+      const subIndent = value1 === '' ? '+ ' : '- ';
       return _.concat(...[acc], [
-        `${defaultIndent}- ${val}: ${value1}${value2}`,
+        `${defaultIndent}${subIndent}${val}: ${value1}${value2}`,
       ]);
     }
     return _.concat(
       ...[acc],
       [`${defaultIndent}- ${val}: ${value1}`],
-      [`  + ${val}: ${value2}`]
+      [`${defaultIndent}+ ${val}: ${value2}`],
     );
   }, []);
-  console.log(["{", ...sorted, "}"].join("\n"));
+  const result = ['{', ...sorted, '}'].join('\n');
+  console.log(result);
+  return result;
 };
 
 export default gendiff;

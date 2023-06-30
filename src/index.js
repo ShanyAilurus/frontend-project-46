@@ -1,42 +1,51 @@
 import _ from 'lodash';
-import { readFileSync } from 'fs';
+import fs from "fs";
 import path from 'path';
 import process from 'process';
 
-const getParseData = (filePath) => {
-  const absolutePath = path.resolve(process.cwd(), filePath);
-  const readJson = readFileSync(absolutePath, 'utf-8');
-  const result = JSON.parse(readJson);
-  return result;
-  };
+const getParseData = (pathToFile) => {
+  const absolutePath = path.resolve(
+    process.cwd(),
+    "__fixtures__",
+    pathToFile
+  );
+  const fileData = fs.readFileSync(absolutePath).toString();
+  return fileData;
+};
 
 const getSortedKeys = (obj1, obj2) => {
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
   const unionKeys = _.union(keys1, keys2); 
-  const sortedKeys = _.sortBy(unionKeys);
-  return sortedKeys;
+  return unionKeys;
 }
 
 const gendiff = (filePath1, filePath2) => {
   const firstObj = getParseData(filePath1);
   const secondObj = getParseData(filePath2);
-  const keys = getSortedKeys(firstObj, secondObj);
-  const conditions = keys.reduce((acc, key) => {
-    if (!_.has(firstObj, key)) {
-      acc[`+ ${key}`] = secondObj[key];
-    } else if (!_.has(firstObj, key)) {
-      acc[`- ${key}`] = firstObj[key];
-    } else if (firstObj[key] !== secondObj[key]) {
-      acc[`- ${key}`] = firstObj[key];
-      acc[`+ ${key}`] = secondObj[key];
-    } else if (firstObj[key] === secondObj[key]) {
-      acc[`  ${key}`] = firstObj[key];
+  const dataFirstObj = JSON.parse(firstObj);
+  const dataSecondObj = JSON.parse(secondObj);
+  const mergedKeys = getSortedKeys(dataFirstObj, dataSecondObj);
+  const sorted = _.sortBy(mergedKeys).reduce((acc, val) => {
+    const value1 = _.get(dataFirstObj, val, "");
+    const value2 = _.get(dataSecondObj, val, "");
+    const defaultIndent = "  ";
+    if (value1 === value2) {
+      return _.concat(...[acc], [`${defaultIndent}  ${val}: ${value1}`]);
     }
-    return acc;
-  }, {});
-  const convertObjInString = JSON.stringify(conditions, null, '  ');
-  return convertObjInString.replace(/"/gi, '').replace(/,/gi, '');
+    if (value2 === "") {
+      return _.concat(...[acc], [`${defaultIndent}- ${val}: ${value1}`]);
+    }
+    if (value1 === "") {
+      return _.concat(...[acc], [`${defaultIndent}+ ${val}: ${value2}`]);
+    }
+    return _.concat(
+      ...[acc],
+      [`${defaultIndent}- ${val}: ${value1}`],
+      [`  + ${val}: ${value2}`]
+    );
+  }, []);
+  console.log(["{", ...sorted, "}"].join("\n"));
 };
 
 export default gendiff;

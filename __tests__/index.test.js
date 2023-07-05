@@ -23,3 +23,10 @@ test('gendiff files with the extension *.yaml', () => {
   const result = readFile('result.txt');
   expect(gendiff(file1, file2)).toEqual(result);
 });
+
+test('gendiff files with the extension *.yml', () => {
+  const file1 = getFixturePath('file1.yml');
+  const file2 = getFixturePath('file2.yml');
+  const result = readFile('result.txt');
+  expect(gendiff(file1, file2)).toEqual(result);
+});

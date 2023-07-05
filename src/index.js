@@ -1,49 +1,48 @@
+import { getSortedKeys, parse } from './utils.js';
+import stylish from './stylish.js'
 import _ from 'lodash';
-import fs from "fs";
-import path from 'path';
-import process from 'process';
 
-const getParseData = (pathToFile) => {
-  const absolutePath = path.resolve(process.cwd(), '__fixtures__', pathToFile);
-  const fileData = fs.readFileSync(absolutePath).toString();
-  return fileData;
-};
+const gendiff = (filePath1, filePath2, formatter = stylish) => {
+    const dataObject1 = parse(filePath1);
+    const dataObject2 = parse(filePath2);
+    const iter = (data1, data2, changeKey = true) => {
+      const sortKeys = _.sortBy(getSortedKeys(data1, data2));
+      const unchangeType = 'unchanged';
+      const oldType = changeKey ? 'deleted' : 'unchanged';
+      const newType = changeKey ? 'added' : 'unchanged';
+      return sortKeys.reduce((acc, element) => {
+        const children1 = _.get(data1, element);
+        const children2 = _.get(data2, element);
+        if (!_.isObject(children1) && !_.isObject(children2)) {
+          if (children1 === children2) {
+            return [...acc, { name: element, type: `${unchangeType}`, children: children1 }];
+          }
+          if (children1 !== undefined && children2 !== undefined) {
+            return [...acc, { name: element, type: `${oldType}`, children: children1 },
+              { name: element, type: `${newType}`, children: children2 }];
+          }
+          return children1 === undefined ? [...acc, { name: element, type: `${newType}`, children: children2 }]
+            : [...acc, { name: element, type: `${oldType}`, children: children1 }];
+        }
+        if (_.isObject(children1) && _.isObject(children2)) {
+          return [...acc, { name: element, type: `${unchangeType}`, children: iter(children1, children2) }];
+        }
+        if (_.isObject(children1) && children2 !== undefined) {
+          return [...acc, { name: element, type: `${oldType}`, children: iter(children1, {}, false) },
+            { name: element, type: `${newType}`, children: children2 }];
+        }
+        if (_.isObject(children2) && children1 !== undefined) {
+          return [...acc, { name: element, type: `${oldType}`, children: children1 },
+            { name: element, type: `${newType}`, children: iter({}, children2) }];
+        }
+        return children1 ? [...acc, { name: element, type: `${oldType}`, children: iter(children1, {}, false) }]
+          : [...acc, { name: element, type: `${newType}`, children: iter({}, children2, false) }];
+      }, []);
+    };
+    const total = iter(dataObject1, dataObject2, true);
+    console.log(formatter(total));
+    return formatter(total);
+  };
 
-const getSortedKeys = (obj1, obj2) => {
-  const keys1 = Object.keys(obj1);
-  const keys2 = Object.keys(obj2);
-  const unionKeys = _.union(keys1, keys2); 
-  return unionKeys;
-}
-
-const gendiff = (filePath1, filePath2) => {
-  const firstObj = getParseData(filePath1);
-  const secondObj = getParseData(filePath2);
-  const dataFirstObj = JSON.parse(firstObj);
-  const dataSecondObj = JSON.parse(secondObj);
-  const mergedKeys = getSortedKeys(dataFirstObj, dataSecondObj);
-  const sorted = _.sortBy(mergedKeys).reduce((acc, val) => {
-    const value1 = _.get(dataFirstObj, val, '');
-    const value2 = _.get(dataSecondObj, val, '');
-    const defaultIndent = '  ';
-    if (value1 === value2) {
-      return _.concat(...[acc], [`${defaultIndent.repeat(2)}${val}: ${value1}`]);
-    }
-    if (value1 === '' || value2 === '') {
-      const subIndent = value1 === '' ? '+ ' : '- ';
-      return _.concat(...[acc], [
-        `${defaultIndent}${subIndent}${val}: ${value1}${value2}`,
-      ]);
-    }
-    return _.concat(
-      ...[acc],
-      [`${defaultIndent}- ${val}: ${value1}`],
-      [`${defaultIndent}+ ${val}: ${value2}`],
-    );
-  }, []);
-  const result = ['{', ...sorted, '}'].join('\n');
-  console.log(result);
-  return result;
-};
 
 export default gendiff;

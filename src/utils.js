@@ -10,7 +10,7 @@ const getSortedKeys = (data1, data2) => {
   };
 
 const readFile = (pathToFile) => {
-    const absolutePath = path.resolve(process.cwd(), '__fixtures__', pathToFile);
+    const absolutePath = path.resolve(process.cwd(), '../__fixtures__', pathToFile);
     const fileData = fs.readFileSync(absolutePath).toString();
     return fileData;
 };

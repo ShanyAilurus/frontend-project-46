@@ -13,7 +13,8 @@ program
   .argument('<filepath1>')
   .argument('<filepath2>')
   .action((filepath1, filepath2) => {
-    gendiff(filepath1, filepath2);
+    const formatType = program.opts().format;
+    gendiff(filepath1, filepath2, formatType);
   });
 
 program.parse();

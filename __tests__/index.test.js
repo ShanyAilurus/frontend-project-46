@@ -9,65 +9,31 @@ const __dirname = dirname(__filename);
 const getFixturePath = (filename) => path.join(__dirname, '..', '__fixtures__', filename);
 const readFile = (filename) => fs.readFileSync(getFixturePath(filename), 'utf-8');
 
-test('gendiff files with stylish the extension *.json', () => {
-  const file1 = getFixturePath('file1.json');
-  const file2 = getFixturePath('file2.json');
-  const result = readFile('resultStylish.txt');
-  expect(gendiff(file1, file2, 'stylish')).toEqual(result);
-});
+const fileJson1 = getFixturePath('file1.json');
+const fileJson2 = getFixturePath('file2.json');
+const fileYaml1 = getFixturePath('file1.yaml');
+const fileYaml2 = getFixturePath('file2.yaml');
+const fileYml1 = getFixturePath('file1.yml');
+const fileYml2 = getFixturePath('file2.yml');
 
-test('gendiff files with stylish the extension *.yaml', () => {
-  const file1 = getFixturePath('file1.yaml');
-  const file2 = getFixturePath('file2.yaml');
-  const result = readFile('resultStylish.txt');
-  expect(gendiff(file1, file2, 'stylish')).toEqual(result);
-});
+describe('Difference', () => {
+  const formats = [
+    { format: 'stylish', result: 'resultStylish.txt' },
+    { format: 'plain', result: 'resultPlain.txt' },
+    { format: 'json', result: 'resultJson.txt' },
+  ];
 
-test('gendiff files with stylish the extension *.yml', () => {
-  const file1 = getFixturePath('file1.yml');
-  const file2 = getFixturePath('file2.yml');
-  const result = readFile('resultStylish.txt');
-  expect(gendiff(file1, file2, 'stylish')).toEqual(result);
-});
+  formats.forEach(({ format, result }) => {
+    const total = readFile(result);
 
-test('gendiff files with plain the extension *.json', () => {
-  const file1 = getFixturePath('file1.json');
-  const file2 = getFixturePath('file2.json');
-  const result = readFile('resultPlain.txt');
-  expect(gendiff(file1, file2, 'plain')).toEqual(result);
-});
-
-test('gendiff files with plain the extension *.yaml', () => {
-  const file1 = getFixturePath('file1.yaml');
-  const file2 = getFixturePath('file2.yaml');
-  const result = readFile('resultPlain.txt');
-  expect(gendiff(file1, file2, 'plain')).toEqual(result);
-});
-
-test('gendiff files with plain the extension *.yml', () => {
-  const file1 = getFixturePath('file1.yml');
-  const file2 = getFixturePath('file2.yml');
-  const result = readFile('resultPlain.txt');
-  expect(gendiff(file1, file2, 'plain')).toEqual(result);
-});
-
-test('gendiff files with JSON the extension *.json', () => {
-  const file1 = getFixturePath('file1.json');
-  const file2 = getFixturePath('file2.json');
-  const result = readFile('resultJson.txt');
-  expect(gendiff(file1, file2, 'json')).toEqual(result);
-});
-
-test('gendiff files with JSON the extension *.yaml', () => {
-  const file1 = getFixturePath('file1.yaml');
-  const file2 = getFixturePath('file2.yaml');
-  const result = readFile('resultJson.txt');
-  expect(gendiff(file1, file2, 'json')).toEqual(result);
-});
-
-test('gendiff files with JSON the extension *.yml', () => {
-  const file1 = getFixturePath('file1.yml');
-  const file2 = getFixturePath('file2.yml');
-  const result = readFile('resultJson.txt');
-  expect(gendiff(file1, file2, 'json')).toEqual(result);
+    describe(`gendiff files with ${format}`, () => {
+      test.each([
+        ['extension *.json', fileJson1, fileJson2],
+        ['extension *.yaml', fileYaml1, fileYaml2],
+        ['extension *.yml', fileYml1, fileYml2],
+      ])('%s', (filename, file1, file2) => {
+        expect(gendiff(file1, file2, format)).toBe(total);
+      });
+    });
+  });
 });

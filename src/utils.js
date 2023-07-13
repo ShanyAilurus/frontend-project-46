@@ -6,7 +6,7 @@ import _ from 'lodash';
 const getSortedKeys = (data1, data2) => {
     const keys1 = data1 ? Object.keys(data1) : [];
     const keys2 = data2 ? Object.keys(data2) : [];
-    return _.union(keys1, keys2);
+    return _.sortBy(_.union(keys1, keys2));
   };
 
 const readFile = (pathToFile) => {
@@ -21,38 +21,31 @@ const parse = (file) => {
     return fileType === '.json' ? JSON.parse(data) : YAML.load(data);
 };
 
-const iter = (data1, data2, changeKey = true) => {
-    const sortKeys = _.sortBy(getSortedKeys(data1, data2));
-    const delType = changeKey ? 'deleted' : 'unchanged';
-    const addType = changeKey ? 'added' : 'unchanged';
-    return sortKeys.reduce((acc, element) => {
-      const children1 = _.get(data1, element);
-      const children2 = _.get(data2, element);
-      if (!_.isObject(children1) && !_.isObject(children2)) {
-        if (children1 === children2) {
-          return [...acc, { name: element, type: 'unchanged', children: children1 }];
-        }
-        if (children1 !== undefined && children2 !== undefined) {
-          return [...acc, { name: element, type: 'changed', children: children1 },
-            { name: element, type: 'set', children: children2 }];
-        }
-        return children1 === undefined ? [...acc, { name: element, type: `${addType}`, children: children2 }]
-          : [...acc, { name: element, type: `${delType}`, children: children1 }];
-      }
-      if (_.isObject(children1) && _.isObject(children2)) {
-        return [...acc, { name: element, type: 'unchanged', children: iter(children1, children2) }];
-      }
-      if (_.isObject(children1) && children2 !== undefined) {
-        return [...acc, { name: element, type: 'changed', children: iter(children1, {}, false) },
-          { name: element, type: 'set', children: children2 }];
-      }
-      if (_.isObject(children2) && children1 !== undefined) {
-        return [...acc, { name: element, type: 'changed', children: children1 },
-          { name: element, type: 'set', children: iter({}, children2, false) }];
-      }
-      return children1 ? [...acc, { name: element, type: `${delType}`, children: iter(children1, {}, false) }]
-        : [...acc, { name: element, type: `${addType}`, children: iter({}, children2, false) }];
-    }, []);
+const iter = (dataObject1, dataObject2) => {
+  const sortedKeys = getSortedKeys(dataObject1, dataObject2);
+
+  const getDiff = (key) => {
+    if (!_.has(dataObject1, key)) {
+      return { key, type: 'added', value: dataObject2[key], };
+    }
+
+    if (!_.has(dataObject2, key)) {
+      return { key, type: 'deleted', value: dataObject1[key] };
+    }
+
+    if (dataObject1[key] === dataObject2[key]) {
+      return { key, type: 'unchanged', value: dataObject1[key] };
+    }
+
+    if (_.isObject(dataObject1[key]) && _.isObject(dataObject2[key])) {
+      return { key, type: 'complex', value: iter(dataObject1[key], dataObject2[key]) };
+    }
+
+    return { key, type: 'updated', value: { oldValue: dataObject1[key], newValue: dataObject2[key] } };
   };
+
+  const diffItems = sortedKeys.flatMap(getDiff);
+  return diffItems;
+};
 
 export { parse, iter };

@@ -1,28 +1,43 @@
-const addIndent = (type) => {
-  switch (type) {
-    case ('unchanged'):
-      return '    ';
-    case ('added'):
-    case ('set'):
-      return '  + ';
-    case ('deleted'):
-    case ('changed'):
-      return '  - ';
-    default:
-      throw new Error('Unexpected file difference');
+import _ from 'lodash';
+
+const indent = 4;
+const getIndentedInLine = (depth) => `  ${' '.repeat(indent).repeat(depth - 1)}`;
+const getIndentedWithParenthesis  = (depth) => `${' '.repeat(indent).repeat(depth)}`;
+const genLine = (key, value, char, depth) => `${getIndentedInLine(depth)}${char}${key}: ${value}`;
+const WrapInParentheses = (body, depth) => `{\n${body}\n${getIndentedWithParenthesis (depth)}}`;
+
+const formatValue = (value, depth) => {
+  if (!_.isObject(value)) {
+    return value;
   }
+  const entries = Object.entries(value);
+  const items = entries.map(([key, val]) => genLine(key, formatValue(val, depth + 1), '  ', depth + 1));
+  const body = items.join('\n');
+  return WrapInParentheses(body, depth);
 };
-const stylish = (file) => {
-  const iter = (node, depth = 0) => {
-    const baseIndent = ' '.repeat(depth * 4);
-    const result = node.reduce((acc, elem) => {
-      const { name, type, children } = elem;
-      const newChildren = Array.isArray(children) ? iter(children, depth + 1) : children;
-      const indent = `${baseIndent}${addIndent(type)}`;
-      return [...acc, `${indent}${name}: ${newChildren}`];
-    }, []);
-    return ['{', ...result, `${baseIndent}}`].join('\n');
+
+const processDiff = (diff, depth) => {
+  const signs = { 
+    added: '+ ',
+    deleted: '- ',
+    unchanged: '  ' 
   };
-  return iter(file);
+
+  const items = diff.flatMap(({ key, value, type}) => {
+    switch (type) {
+      case 'complex':
+        return genLine(key, processDiff(value, depth + 1), '  ', depth + 1);
+      case 'updated':
+        return [genLine(key, formatValue(value.oldValue, depth + 1), signs.deleted, depth + 1),
+          genLine(key, formatValue(value.newValue, depth + 1), signs.added, depth + 1)];
+      default:
+        return genLine(key, formatValue(value, depth + 1), signs[type], depth + 1);
+    }
+  });
+  const body = items.join('\n');
+  return WrapInParentheses(body, depth);
 };
-  export default stylish;
+
+const stylish = (diff) => processDiff(diff, 0);
+
+export default stylish;

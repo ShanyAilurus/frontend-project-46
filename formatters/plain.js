@@ -1,26 +1,39 @@
-const makeString = (element) => (typeof element === 'string' ? `'${element}'` : `${element}`);
+import _ from 'lodash';
 
-const plain = (file) => {
-  const iter = (unit, nameOfProperty, point = false) => {
-    const result = unit.reduce((acc, element, index) => {
-      const { name, type, children } = element;
-      const newValue = Array.isArray(children) ? '[complex value]' : makeString(children);
-      const additionalPoint = point ? '.' : '';
-      const newProp = `${nameOfProperty}${additionalPoint}${name}`;
-      if (type === 'unchanged') {
-        return Array.isArray(children) ? [...acc, iter(children, `${newProp}`, true)] : [...acc, []];
+const formatValue = (value) => {
+  if (_.isString(value)) {
+    return `'${value}'`;
+  }
+  if (_.isObject(value)) {
+    return '[complex value]';
+  }
+  return value;
+};
+
+const plain = (diff, path = []) => {
+  const filterItems = diff.filter(({ type }) => type !== 'unchanged');
+
+  const items = filterItems.map(({ key, value, type }) => {
+    const newPath = path.concat(key);
+    const node = newPath.join('.');
+    switch (type) {
+      case 'added': {
+        const val = formatValue(value);
+        return `Property '${node}' was added with value: ${val}`;
       }
-      if (type === 'added') return [...acc, `Property '${newProp}' was added with value: ${newValue}`];
-      if (type === 'deleted') return [...acc, `Property '${newProp}' was removed`];
-      if (type === 'set') {
-        const value = Array.isArray(unit[index - 1].children) ? '[complex value]' : makeString(unit[index - 1].children);
-        return [...acc, `Property '${newProp}' was updated. From ${value} to ${newValue}`];
+      case 'deleted':
+        return `Property '${node}' was removed`;
+      case 'updated': {
+        const { oldValue, newValue } = value;
+        const oldVal = formatValue(oldValue);
+        const newVal = formatValue(newValue);
+        return `Property '${node}' was updated. From ${oldVal} to ${newVal}`;
       }
-      return [...acc, []];
-    }, []);
-    return result.flat(Infinity).join('\n');
-  };
-  return iter(file, '');
+      default:
+        return plain(value, newPath);
+    }
+  });
+  return items.join('\n');
 };
 
 export default plain;

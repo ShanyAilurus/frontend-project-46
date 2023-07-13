@@ -2,9 +2,9 @@ import _ from 'lodash';
 
 const indent = 4;
 const getIndentedInLine = (depth) => `  ${' '.repeat(indent).repeat(depth - 1)}`;
-const getIndentedWithParenthesis  = (depth) => `${' '.repeat(indent).repeat(depth)}`;
+const getIndentedWithParenthesis = (depth) => `${' '.repeat(indent).repeat(depth)}`;
 const genLine = (key, value, char, depth) => `${getIndentedInLine(depth)}${char}${key}: ${value}`;
-const WrapInParentheses = (body, depth) => `{\n${body}\n${getIndentedWithParenthesis (depth)}}`;
+const WrapInParentheses = (body, depth) => `{\n${body}\n${getIndentedWithParenthesis(depth)}}`;
 
 const formatValue = (value, depth) => {
   if (!_.isObject(value)) {
@@ -17,13 +17,13 @@ const formatValue = (value, depth) => {
 };
 
 const processDiff = (diff, depth) => {
-  const signs = { 
+  const signs = {
     added: '+ ',
     deleted: '- ',
-    unchanged: '  ' 
+    unchanged: '  ',
   };
 
-  const items = diff.flatMap(({ key, value, type}) => {
+  const items = diff.flatMap(({ key, value, type }) => {
     switch (type) {
       case 'complex':
         return genLine(key, processDiff(value, depth + 1), '  ', depth + 1);

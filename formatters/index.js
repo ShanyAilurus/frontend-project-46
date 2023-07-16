@@ -1,6 +1,5 @@
 import plain from './plain.js';
 import stylish from './stylish.js';
-import json from './json.js';
 
 const formats = (obj, format) => {
   switch (format) {
@@ -9,7 +8,7 @@ const formats = (obj, format) => {
     case 'plain':
       return plain(obj);
     case 'json':
-      return json(obj);
+      return JSON.stringify(obj);;
     default:
       throw new Error(`Unexpected format: ${format}!`);
   }

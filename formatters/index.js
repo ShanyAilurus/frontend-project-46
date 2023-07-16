@@ -8,7 +8,7 @@ const formats = (obj, format) => {
     case 'plain':
       return plain(obj);
     case 'json':
-      return JSON.stringify(obj);;
+      return JSON.stringify(obj);
     default:
       throw new Error(`Unexpected format: ${format}!`);
   }

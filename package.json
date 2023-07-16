@@ -5,7 +5,11 @@
   "description": "A project to create a utility 'gendiff' that compares two files and outputs the difference between them in several variations.",
   "main": "src/index.js",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint ./formatters",
+    "lint:fix": "eslint ./formatters --fix"
+    
+    
   },
   "bin": {
     "gendiff": "bin/gendiff.js"

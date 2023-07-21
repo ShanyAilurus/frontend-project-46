@@ -13,7 +13,6 @@
   "author": "Nataliia Selianska",
   "license": "ISC",
   "dependencies": {
-    "@jest/globals": "^29.6.1",
     "commander": "^10.0.1",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21"

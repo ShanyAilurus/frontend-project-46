@@ -1,14 +1,8 @@
 import path from 'path';
 import fs from 'fs';
-import YAML from 'js-yaml';
-import _ from 'lodash';
-import formats from '../formatters/index.js';
-
-const getSortedKeys = (data1, data2) => {
-  const keys1 = data1 ? Object.keys(data1) : [];
-  const keys2 = data2 ? Object.keys(data2) : [];
-  return _.sortBy(_.union(keys1, keys2));
-};
+import format from '../formatters/index.js';
+import iter from './tree_builder.js';
+import parse from './parser.js';
 
 const readFile = (pathToFile) => {
   const absolutePath = path.resolve(process.cwd(), '__fixtures__', pathToFile);
@@ -16,44 +10,19 @@ const readFile = (pathToFile) => {
   return fileData;
 };
 
-const parse = (file) => {
-  const fileType = path.extname(file);
-  const data = readFile(file);
-  return fileType === '.json' ? JSON.parse(data) : YAML.load(data);
-};
-
-const iter = (dataObject1, dataObject2) => {
-  const sortedKeys = getSortedKeys(dataObject1, dataObject2);
-
-  const getDiff = (key) => {
-    if (!_.has(dataObject1, key)) {
-      return { key, type: 'added', value: dataObject2[key] };
-    }
-
-    if (!_.has(dataObject2, key)) {
-      return { key, type: 'deleted', value: dataObject1[key] };
-    }
-
-    if (dataObject1[key] === dataObject2[key]) {
-      return { key, type: 'unchanged', value: dataObject1[key] };
-    }
-
-    if (_.isObject(dataObject1[key]) && _.isObject(dataObject2[key])) {
-      return { key, type: 'complex', value: iter(dataObject1[key], dataObject2[key]) };
-    }
-
-    return { key, type: 'updated', value: { oldValue: dataObject1[key], newValue: dataObject2[key] } };
-  };
-
-  const diffItems = sortedKeys.flatMap(getDiff);
-  return diffItems;
-};
+const getFileType = (file) => path.extname(file);
 
 const gendiff = (filePath1, filePath2, formatter = 'stylish') => {
-  const dataObject1 = parse(filePath1);
-  const dataObject2 = parse(filePath2);
+  const data1 = readFile(filePath1);
+  const fileType1 = getFileType(filePath1);
+  const dataObject1 = parse(data1, fileType1);
+
+  const data2 = readFile(filePath2);
+  const fileType2 = getFileType(filePath2);
+  const dataObject2 = parse(data2, fileType2);
+
   const total = iter(dataObject1, dataObject2);
-  return formats(total, formatter);
+  return format(total, formatter);
 };
 
 export default gendiff;
